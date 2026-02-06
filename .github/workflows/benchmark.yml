@@ -1,0 +1,52 @@
+name: Benchmarks
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  benchmark:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+      
+      - name: Check for benchmark tests
+        id: check-benchmarks
+        run: |
+          if [ -d "tests/benchmark" ] && [ -n "$(find tests/benchmark -name 'test_*.py' -o -name '*_benchmark.py')" ]; then
+            echo "has_benchmarks=true" >> $GITHUB_OUTPUT
+          else
+            echo "has_benchmarks=false" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: Run benchmarks
+        if: steps.check-benchmarks.outputs.has_benchmarks == 'true'
+        run: |
+          pytest tests/benchmark/ --benchmark-only --benchmark-json=benchmark.json
+      
+      - name: Skip benchmarks (no tests found)
+        if: steps.check-benchmarks.outputs.has_benchmarks == 'false'
+        run: |
+          echo "No benchmark tests found in tests/benchmark/"
+          echo "Skipping benchmark execution"
+      
+      - name: Store benchmark results
+        if: steps.check-benchmarks.outputs.has_benchmarks == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: benchmark-results
+          path: benchmark.json

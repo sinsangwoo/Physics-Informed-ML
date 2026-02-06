@@ -1,0 +1,31 @@
+name: Fix Linting Issues
+
+on:
+  workflow_dispatch:  # Manual trigger
+
+jobs:
+  fix-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install ruff
+        run: pip install ruff
+      
+      - name: Run ruff fix
+        run: |
+          ruff check --fix src/ tests/ examples/
+          ruff format src/ tests/ examples/
+      
+      - name: Commit changes
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add -A
+          git commit -m "style: Auto-fix linting issues with ruff" || echo "No changes to commit"
+          git push
