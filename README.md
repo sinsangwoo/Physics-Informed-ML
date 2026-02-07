@@ -5,228 +5,206 @@
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-> **A production-ready framework for Physics-Informed Neural Networks (PINNs) and Neural Operators, enabling 100-1000x faster PDE solving for industrial digital twins.**
+> **A production-ready framework for Physics-Informed Neural Networks (PINNs) and Neural Operators, enabling 100-1000x faster PDE solving with interactive 3D visualization.**
 
 ## 🎯 Vision
 
-This project bridges the gap between academic research and industrial deployment of physics-informed machine learning. We focus on:
+Bridge the gap between academic research and industrial deployment of physics-informed machine learning:
 
-- **Speed**: Neural operators achieve 100-1000x speedup over traditional PDE solvers
+- **Speed**: 100-1000x speedup over traditional PDE solvers
 - **Accuracy**: Physics constraints ensure physically plausible predictions
 - **Scalability**: Production-ready API and deployment infrastructure
-- **Flexibility**: Support for various PDEs and multi-physics problems
+- **Interactivity**: Real-time 3D visualization with WebSocket streaming ✨ **NEW**
 
 ## 🚀 Key Features
 
+### Core ML
 - **Physics-Informed Neural Networks (PINNs)**: Embed PDE constraints directly into loss functions
-- **Neural Operators (FNO)**: Learn solution operators for parametric PDE families ✨ **NEW**
-- **Resolution-Invariant Learning**: Train on 64 grid points, test on 256 without retraining ✨ **NEW**
-- **Benchmark Suite**: Comprehensive testing on Heat, Wave, Burgers, Navier-Stokes equations ✨ **NEW**
-- **Multi-Physics Support**: From simple pendulums to fluid dynamics and structural mechanics
-- **Real-Time Inference**: Optimized for low-latency predictions
-- **Interactive Visualization**: Web-based 3D visualization of simulation results
-- **Production Ready**: Docker, Kubernetes, CI/CD, comprehensive testing
+- **Neural Operators (FNO)**: Learn solution operators for parametric PDE families
+- **Resolution-Invariant Learning**: Train on 64 grid points, test on 256 without retraining
+
+### Production API
+- **REST API**: FastAPI with async endpoints
+- **WebSocket Streaming**: Real-time prediction streaming at 50 FPS ✨ **NEW**
+- **Docker**: CPU and GPU containerization
+- **Batch Processing**: High-throughput inference
+
+### Interactive Frontend ✨ **NEW**
+- **3D Visualization**: Real-time Three.js rendering
+- **2D Charts**: Interactive line plots with Recharts
+- **Export**: JSON, CSV, and PNG screenshot support
+- **Live Metrics**: Inference time and throughput monitoring
+
+## 🎨 Screenshots
+
+```
+┌─────────────────┬──────────────────────┬─────────────────┐
+│   Controls      │   3D Visualization   │  Documentation  │
+│   • PDE Type    │                      │  • Equations    │
+│   • Resolution  │    [Three.js Canvas] │  • How it works │
+│   • Time Steps  │                      │  • Features     │
+│                 │                      │                 │
+│   Metrics       │   ──────────────     │  Export         │
+│   • 2.5ms       │   WebSocket Stream   │  • JSON         │
+│   • 600/s       │                      │  • CSV          │
+│                 │                      │  • Screenshot   │
+└─────────────────┴──────────────────────┴─────────────────┘
+```
 
 ## 📦 Installation
 
 ### Quick Start
 
 ```bash
-# Clone the repository
+# Clone repository
 git clone https://github.com/sinsangwoo/Physics-Informed-ML.git
 cd Physics-Informed-ML
 
-# Create virtual environment
+# Backend setup
 python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+source venv/bin/activate  # Windows: venv\Scripts\activate
+pip install -e ".[dev,api]"
 
-# Install package
-pip install -e ".[dev]"
-
-# Install pre-commit hooks
-pre-commit install
+# Frontend setup
+cd frontend
+npm install
 ```
 
-### Development Setup
+### Run Full Stack
 
 ```bash
-# Install with all optional dependencies
-pip install -e ".[dev,api,docs,visualization]"
+# Terminal 1: Start API
+uvicorn physics_informed_ml.api.main:app --reload
 
-# Run tests
-pytest
-
-# Run linting and type checking
-ruff check src tests
-mypy src
+# Terminal 2: Start frontend
+cd frontend
+npm run dev
 ```
 
-## 🏗️ Project Structure
+Visit `http://localhost:3000` for interactive UI!
 
-```
-physics-informed-ml/
-├── src/
-│   └── physics_informed_ml/
-│       ├── core/              # Core physics simulation engine
-│       ├── models/            # PINN and neural operator models
-│       │   ├── operators/     # FNO, DeepONet implementations ✨ NEW
-│       │   └── ...
-│       ├── benchmarks/        # PDE benchmark suite ✨ NEW
-│       ├── solvers/           # PDE solvers and integrators
-│       ├── training/          # Training loops and optimization
-│       └── cli.py             # Command-line interface
-├── tests/
-│   ├── test_neural_operators.py  # Neural operator tests ✨ NEW
-│   ├── test_benchmarks.py        # Benchmark tests ✨ NEW
-│   └── ...
-├── examples/
-│   ├── neural_operators/      # FNO examples ✨ NEW
-│   └── ...
-├── docs/
-│   ├── neural_operators.md    # Neural operator guide ✨ NEW
-│   └── ...
-└── configs/                   # Configuration files
+### Docker Deployment
+
+```bash
+# Backend + Frontend
+docker-compose up -d
+
+# GPU-enabled
+docker-compose --profile gpu up -d
 ```
 
 ## 💻 Usage
 
-### Neural Operators (NEW!)
+### Web Interface (Recommended)
+
+1. Start the stack (API + Frontend)
+2. Open `http://localhost:3000`
+3. Select PDE type (Heat, Wave, Burgers)
+4. Adjust resolution and time steps
+5. Click "Play" to watch real-time solution
+6. Toggle 2D/3D views
+7. Export results
+
+### Python API
 
 ```python
 from physics_informed_ml.models import FNO1d
 from physics_informed_ml.benchmarks import HeatEquation1D, BenchmarkRunner
 
-# Initialize FNO model
-fno = FNO1d(
-    modes=12,        # Fourier modes
-    width=32,        # Hidden channels
-    in_channels=1,   # Initial condition
-    out_channels=1,  # Solution
-    n_layers=4,      # Depth
-)
+# Initialize model
+fno = FNO1d(modes=12, width=32, n_layers=4)
 
-# Setup benchmark
+# Run benchmark
 runner = BenchmarkRunner(device="cuda")
 problem = HeatEquation1D(alpha=0.01)
 
-# Run benchmark with multi-resolution testing
 results = runner.run(
     model=fno,
     problem=problem,
     train_resolution=64,
-    test_resolutions=[64, 128, 256],  # Resolution invariance!
-    epochs=100,
+    test_resolutions=[64, 128, 256],
 )
-
-# Results show consistent accuracy across resolutions
-for res, metrics in results.items():
-    print(f"Resolution {res}: Error={metrics.l2_relative_error:.4f}")
 ```
 
-### Quick Benchmark Example
+### REST API
 
 ```bash
-# Run FNO benchmark on heat equation
-python examples/neural_operators/run_fno_benchmark.py
+# Health check
+curl http://localhost:8000/health
 
-# Output:
-# - Training curve plot
-# - Prediction vs ground truth comparison
-# - Performance metrics (accuracy, speed, memory)
-# - JSON results file
+# Single prediction
+curl -X POST http://localhost:8000/predict \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model_name": "heat_equation_fno",
+    "input_data": [[0.5, 0.3, 0.1]]
+  }'
 ```
 
-### Traditional PINN Usage
+### WebSocket Streaming
 
-```python
-from physics_informed_ml import PendulumSimulator, PINNModel
+```javascript
+const ws = new WebSocket('ws://localhost:8000/ws')
 
-# Create simulator
-sim = PendulumSimulator(length=1.0, gravity=9.81)
+ws.onopen = () => {
+  ws.send(JSON.stringify({
+    action: 'stream',
+    model_name: 'heat_equation_fno',
+    input_data: [0.5, 0.4, 0.3, ...],
+    time_steps: 50
+  }))
+}
 
-# Generate training data
-X, y = sim.generate_dataset(n_samples=1000)
-
-# Train PINN model
-model = PINNModel(hidden_dims=[64, 64, 64])
-model.train(X, y, epochs=1000)
-
-# Predict
-predictions = model.predict(X_test)
-```
-
-## 🔬 Examples
-
-Check out the `examples/` directory for:
-
-1. **Neural Operator Benchmark** (`neural_operators/run_fno_benchmark.py`) ✨ **NEW**
-   - FNO on 1D heat equation
-   - Multi-resolution evaluation
-   - Performance visualization
-
-2. **Basic PINN Training**: Simple pendulum with physics constraints
-3. **Multi-Physics**: Coupled fluid-structure interaction
-4. **Uncertainty Quantification**: Bayesian PINNs
-
-## 🎓 Scientific Background
-
-### Fourier Neural Operator (FNO)
-
-FNO learns mappings between function spaces using spectral methods:
-
-```
-G: a(x) → u(x)
-
-where G is learned via Fourier convolutions:
-v(x) = σ(W·u + K·u)(x)
-K·u = ℱ⁻¹(R·ℱ(u))
-```
-
-**Key Advantages:**
-- **Resolution Invariance**: Works on any grid resolution
-- **Global Receptive Field**: Fourier transform captures long-range dependencies
-- **Speed**: O(N log N) complexity vs O(N²) for standard convolutions
-
-### Physics-Informed Neural Networks (PINNs)
-
-PINNs incorporate physics laws (PDEs) directly into the neural network training process:
-
-```
-Loss = Loss_data + λ * Loss_physics
-
-where Loss_physics = ||∂²u/∂t² + (g/L)sin(u)||²
+ws.onmessage = (event) => {
+  const data = JSON.parse(event.data)
+  if (data.type === 'frame') {
+    // Update visualization
+    updateVisualization(data.prediction)
+  }
+}
 ```
 
 ## 📊 Benchmarks
 
-| Problem | Traditional Solver | PINN | FNO (Neural Operator) | Speedup |
-|---------|-------------------|------|----------------------|----------|
-| Pendulum (single) | 0.1s | 0.05s | 0.001s | 100x |
-| Heat Equation 1D | 1.0s | 0.5s | 0.002s | 500x |
-| Burgers' Equation | 10s | 2s | 0.01s | 1000x |
-| Navier-Stokes 2D | 300s | 30s | 0.5s | 600x |
+| Problem | Traditional | PINN | FNO | Speedup |
+|---------|------------|------|-----|---------|
+| Heat Equation 1D | 1.0s | 0.5s | 0.002s | **500x** |
+| Burgers' Equation | 10s | 2s | 0.01s | **1000x** |
+| Navier-Stokes 2D | 300s | 30s | 0.5s | **600x** |
 
-*Benchmarks run on NVIDIA A100 GPU*
-
-### Resolution Invariance Test (FNO)
+### Resolution Invariance
 
 ```
-Train on 64 points, test on:
-- 64 points:  L2 Error = 0.0082 ✓
-- 128 points: L2 Error = 0.0085 ✓
-- 256 points: L2 Error = 0.0089 ✓
-
-Traditional CNN would need retraining for each resolution!
+Train on 64 points → Test on:
+• 64:  L2=0.0082 ✓
+• 128: L2=0.0085 ✓
+• 256: L2=0.0089 ✓
 ```
 
-## 🛠️ Technology Stack
+## 🏗️ Architecture
 
-- **Deep Learning**: PyTorch 2.1+
-- **Scientific Computing**: NumPy, SciPy
-- **Visualization**: Matplotlib, Plotly
-- **Testing**: pytest, pytest-benchmark
-- **CI/CD**: GitHub Actions
-- **Code Quality**: Ruff, mypy, pre-commit
+```
+┌─────────────────────────────────────────┐
+│           React Frontend                │
+│  • Three.js 3D Visualization            │
+│  • Recharts 2D Plots                    │
+│  • WebSocket Client                     │
+└──────────────┬──────────────────────────┘
+               │ HTTP/WS
+┌──────────────▼──────────────────────────┐
+│          FastAPI Backend                │
+│  • REST Endpoints                       │
+│  • WebSocket Streaming                  │
+│  • Model Management                     │
+└──────────────┬──────────────────────────┘
+               │
+┌──────────────▼──────────────────────────┐
+│        Inference Engine                 │
+│  • FNO Models                           │
+│  • PINN Models                          │
+│  • GPU Acceleration                     │
+└─────────────────────────────────────────┘
+```
 
 ## 🗺️ Roadmap
 
@@ -234,64 +212,76 @@ Traditional CNN would need retraining for each resolution!
 - [x] Modern Python project structure
 - [x] CI/CD pipeline
 - [x] Testing framework
-- [x] Documentation setup
 
 ### Phase 1: Physics-Informed Architecture ✅
-- [x] PINN implementation with automatic differentiation
-- [x] Multi-body dynamics (double pendulum)
+- [x] PINN implementation
+- [x] Multi-body dynamics
 - [x] Comprehensive benchmarks
 
-### Phase 2: Neural Operators ✅ **COMPLETED**
-- [x] Fourier Neural Operator (FNO) - 1D, 2D, 3D
+### Phase 2: Neural Operators ✅
+- [x] Fourier Neural Operator (1D/2D/3D)
 - [x] Spectral convolution layers
 - [x] Resolution-invariant learning
-- [x] Benchmark suite (Heat, Wave, Burgers, Navier-Stokes)
-- [x] Multi-resolution evaluation framework
-- [x] Performance profiling (accuracy, speed, memory)
-- [x] Comprehensive test coverage
-- [x] Documentation and examples
+- [x] Benchmark suite
 
-### Phase 3: Production Deployment (Next)
-- [ ] REST API with FastAPI
-- [ ] Real-time WebSocket inference
-- [ ] Docker containerization
-- [ ] Kubernetes orchestration
+### Phase 3: Production API ✅
+- [x] FastAPI REST API
+- [x] Docker containerization
+- [x] Python client SDK
+- [x] Complete documentation
 
-### Phase 4: Interactive Frontend
-- [ ] React + Three.js visualization
-- [ ] Real-time parameter tuning
-- [ ] Model comparison dashboard
+### Phase 4: Interactive Frontend ✅ **COMPLETED**
+- [x] React + TypeScript setup
+- [x] Three.js 3D visualization
+- [x] Real-time parameter tuning
+- [x] WebSocket streaming
+- [x] 2D plotting integration
+- [x] Export functionality (JSON/CSV/PNG)
 
-### Phase 5: Research Features
+### Phase 5: Research Features (Next)
 - [ ] Bayesian uncertainty quantification
-- [ ] Transfer learning for new physics
-- [ ] Explainability and interpretability
+- [ ] Transfer learning
+- [ ] Explainability tools
 - [ ] DeepONet implementation
 
-### Phase 6: Industrial Applications
-- [ ] Aerospace: structural vibration prediction
-- [ ] Energy: fluid flow optimization
-- [ ] Manufacturing: material deformation simulation
+## 🛠️ Technology Stack
+
+**Backend:**
+- PyTorch 2.1+
+- FastAPI
+- WebSockets
+- Docker
+
+**Frontend:**
+- React 18 + TypeScript
+- Three.js (@react-three/fiber)
+- Recharts
+- Zustand
+- Tailwind CSS
+
+**DevOps:**
+- GitHub Actions
+- pytest
+- Ruff + mypy
 
 ## 📚 Documentation
 
-- [Neural Operators Guide](docs/neural_operators.md) - Comprehensive guide to FNO ✨ **NEW**
-- [API Reference](docs/api.md) - Full API documentation
-- [Examples](examples/) - Jupyter notebooks and scripts
+- [Neural Operators Guide](docs/neural_operators.md)
+- [API Reference](docs/api.md)
+- [Deployment Guide](docs/deployment.md)
+- [Frontend README](frontend/README.md)
 
 ## 🤝 Contributing
 
-We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md).
 
 1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+2. Create feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit changes (`git commit -m 'Add amazing feature'`)
+4. Push to branch (`git push origin feature/amazing-feature`)
+5. Open Pull Request
 
 ## 📝 Citation
-
-If you use this project in your research, please cite:
 
 ```bibtex
 @software{physics_informed_ml,
@@ -304,22 +294,14 @@ If you use this project in your research, please cite:
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+MIT License - see [LICENSE](LICENSE) file.
 
 ## 🙏 Acknowledgments
 
-- Inspired by research from:
-  - Raissi et al. (2019) - Physics-Informed Neural Networks
-  - Li et al. (2021) - Fourier Neural Operator
-  - Lu et al. (2021) - DeepONet
-- Built with modern Python tooling and best practices
-- Designed for the 2035 AI-driven simulation landscape
-
-## 📧 Contact
-
-- **Author**: Sangwoo Sin
-- **GitHub**: [@sinsangwoo](https://github.com/sinsangwoo)
+- Raissi et al. (2019) - Physics-Informed Neural Networks
+- Li et al. (2021) - Fourier Neural Operator
+- Lu et al. (2021) - DeepONet
 
 ---
 
-**Built for the future of physics simulation. Made with ❤️ and ⚡ by research engineers.**
+**Built for the future of physics simulation. Made with ❤️ and ⚡**
