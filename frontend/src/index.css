@@ -2,47 +2,26 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
-
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #0a0a0a;
-
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+@layer base {
+  body {
+    @apply bg-slate-950 text-slate-100 antialiased;
+  }
 }
 
-body {
-  margin: 0;
-  min-width: 320px;
-  min-height: 100vh;
-}
-
-#root {
-  width: 100vw;
-  height: 100vh;
-}
-
-/* Custom scrollbar */
-::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-}
-
-::-webkit-scrollbar-track {
-  background: #1a1a1a;
-}
-
-::-webkit-scrollbar-thumb {
-  background: #3b82f6;
-  border-radius: 4px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: #2563eb;
+@layer components {
+  .card {
+    @apply rounded-lg bg-slate-900/50 backdrop-blur-sm border border-slate-800;
+  }
+  
+  .btn-primary {
+    @apply px-4 py-2 rounded-md bg-primary-600 hover:bg-primary-700 transition-colors font-medium;
+  }
+  
+  .btn-secondary {
+    @apply px-4 py-2 rounded-md bg-slate-800 hover:bg-slate-700 transition-colors font-medium;
+  }
+  
+  .input {
+    @apply px-3 py-2 rounded-md bg-slate-900 border border-slate-700 focus:border-primary-500 focus:outline-none transition-colors;
+  }
 }
