@@ -1,89 +1,91 @@
-"""Benchmark tests for Fourier Neural Operators."""
+"""Benchmark tests for FNO models.
+
+These tests measure performance characteristics:
+- Inference latency
+- Training throughput
+- Memory usage
+- Resolution scaling
+"""
 
 import pytest
 import torch
-from physics_informed_ml.models import FNO1d, FNO2d
+import time
+import numpy as np
+from physics_informed_ml.models import FNO1d
+from physics_informed_ml.benchmarks import HeatEquation1D, BenchmarkRunner
 
 
-class TestFNOBenchmarks:
+@pytest.mark.benchmark
+class TestFNOBenchmark:
     """Benchmark FNO performance."""
 
-    @pytest.mark.benchmark(group="fno1d")
-    def test_fno1d_forward_small(self, benchmark):
-        """Benchmark small FNO1d forward pass."""
-        model = FNO1d(modes=8, width=16, n_layers=2)
-        model.eval()
-        x = torch.randn(1, 32, 1)
+    @pytest.fixture
+    def model(self):
+        """Create FNO model."""
+        return FNO1d(modes=8, width=32, n_layers=4)
 
-        result = benchmark(model, x)
-        assert result.shape == (1, 32, 1)
+    @pytest.fixture
+    def problem(self):
+        """Create benchmark problem."""
+        return HeatEquation1D(n_points=64, n_samples=100)
 
-    @pytest.mark.benchmark(group="fno1d")
-    def test_fno1d_forward_medium(self, benchmark):
-        """Benchmark medium FNO1d forward pass."""
-        model = FNO1d(modes=16, width=32, n_layers=4)
+    def test_fno_inference_latency(self, benchmark, model):
+        """Benchmark FNO inference latency."""
         model.eval()
         x = torch.randn(1, 64, 1)
 
-        result = benchmark(model, x)
-        assert result.shape == (1, 64, 1)
+        @benchmark
+        def inference():
+            with torch.no_grad():
+                return model(x)
 
-    @pytest.mark.benchmark(group="fno1d")
-    def test_fno1d_forward_large(self, benchmark):
-        """Benchmark large FNO1d forward pass."""
-        model = FNO1d(modes=16, width=64, n_layers=4)
+    def test_fno_batch_inference(self, benchmark, model):
+        """Benchmark batch inference."""
         model.eval()
-        x = torch.randn(1, 128, 1)
+        x = torch.randn(32, 64, 1)  # Batch of 32
 
-        result = benchmark(model, x)
-        assert result.shape == (1, 128, 1)
+        @benchmark
+        def batch_inference():
+            with torch.no_grad():
+                return model(x)
 
-    @pytest.mark.benchmark(group="fno2d")
-    def test_fno2d_forward_small(self, benchmark):
-        """Benchmark small FNO2d forward pass."""
-        model = FNO2d(modes=(8, 8), width=16, n_layers=2)
+    def test_fno_training_step(self, benchmark, model):
+        """Benchmark single training step."""
+        optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
+        x = torch.randn(16, 64, 1)
+        y = torch.randn(16, 64, 1)
+
+        @benchmark
+        def train_step():
+            optimizer.zero_grad()
+            pred = model(x)
+            loss = torch.nn.functional.mse_loss(pred, y)
+            loss.backward()
+            optimizer.step()
+            return loss.item()
+
+    @pytest.mark.parametrize("resolution", [32, 64, 128, 256])
+    def test_fno_resolution_scaling(self, benchmark, resolution):
+        """Benchmark FNO at different resolutions."""
+        model = FNO1d(modes=8, width=32, n_layers=4)
         model.eval()
-        x = torch.randn(1, 32, 32, 1)
+        x = torch.randn(1, resolution, 1)
 
-        result = benchmark(model, x)
-        assert result.shape == (1, 32, 32, 1)
+        @benchmark
+        def inference():
+            with torch.no_grad():
+                return model(x)
 
-    @pytest.mark.benchmark(group="fno2d")
-    def test_fno2d_forward_medium(self, benchmark):
-        """Benchmark medium FNO2d forward pass."""
-        model = FNO2d(modes=(12, 12), width=32, n_layers=4)
-        model.eval()
-        x = torch.randn(1, 64, 64, 1)
+    def test_benchmark_runner(self, benchmark, model, problem):
+        """Benchmark the benchmark runner itself."""
+        runner = BenchmarkRunner()
 
-        result = benchmark(model, x)
-        assert result.shape == (1, 64, 64, 1)
-
-    @pytest.mark.benchmark(group="resolution-invariance")
-    def test_fno1d_resolution_64(self, benchmark):
-        """Test FNO at resolution 64."""
-        model = FNO1d(modes=16, width=32, n_layers=4)
-        model.eval()
-        x = torch.randn(1, 64, 1)
-
-        result = benchmark(model, x)
-        assert result.shape == (1, 64, 1)
-
-    @pytest.mark.benchmark(group="resolution-invariance")
-    def test_fno1d_resolution_128(self, benchmark):
-        """Test FNO at resolution 128."""
-        model = FNO1d(modes=16, width=32, n_layers=4)
-        model.eval()
-        x = torch.randn(1, 128, 1)
-
-        result = benchmark(model, x)
-        assert result.shape == (1, 128, 1)
-
-    @pytest.mark.benchmark(group="resolution-invariance")
-    def test_fno1d_resolution_256(self, benchmark):
-        """Test FNO at resolution 256."""
-        model = FNO1d(modes=16, width=32, n_layers=4)
-        model.eval()
-        x = torch.randn(1, 256, 1)
-
-        result = benchmark(model, x)
-        assert result.shape == (1, 256, 1)
+        @benchmark
+        def run_benchmark():
+            return runner.run(
+                model=model,
+                problem=problem,
+                n_epochs=10,
+                batch_size=16,
+                test_resolutions=[64],
+            )

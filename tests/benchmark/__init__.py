@@ -1,1 +1,1 @@
-"""Performance benchmarks."""
+"""Benchmark tests for performance evaluation."""
