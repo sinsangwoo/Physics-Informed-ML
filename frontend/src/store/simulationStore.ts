@@ -1,73 +1,57 @@
 import { create } from 'zustand'
 
+export type SimulationType = 'heat' | 'wave' | 'burgers' | 'navier-stokes'
+
 interface SimulationState {
-  // Simulation state
-  isRunning: boolean
-  currentTime: number
+  // Simulation config
+  type: SimulationType
+  resolution: number
+  timeSteps: number
   
-  // Model selection
-  selectedModel: string
-  availableModels: string[]
+  // Animation
+  isPlaying: boolean
+  currentStep: number
   
-  // Parameters
-  parameters: Record<string, number>
+  // Data
+  inputData: number[] | null
+  predictions: number[][] | null
   
-  // Simulation data
-  currentData: number[][]
-  history: number[][][]
-  
-  // Performance metrics
-  inferenceTime: number
-  fps: number
+  // Performance
+  inferenceTime: number | null
   
   // Actions
-  setRunning: (running: boolean) => void
-  setModel: (model: string) => void
-  updateParameter: (key: string, value: number) => void
-  updateData: (data: number[][]) => void
-  addHistory: (data: number[][]) => void
-  updateMetrics: (inferenceTime: number, fps: number) => void
+  setType: (type: SimulationType) => void
+  setResolution: (resolution: number) => void
+  setTimeSteps: (steps: number) => void
+  setIsPlaying: (playing: boolean) => void
+  setCurrentStep: (step: number) => void
+  setInputData: (data: number[]) => void
+  setPredictions: (predictions: number[][]) => void
+  setInferenceTime: (time: number) => void
   reset: () => void
 }
 
 const initialState = {
-  isRunning: false,
-  currentTime: 0,
-  selectedModel: 'heat_equation_fno',
-  availableModels: ['heat_equation_fno', 'burgers_pinn', 'wave_equation'],
-  parameters: {
-    alpha: 0.01,
-    resolution: 64,
-    timestep: 0.01,
-  },
-  currentData: [],
-  history: [],
-  inferenceTime: 0,
-  fps: 0,
+  type: 'heat' as SimulationType,
+  resolution: 64,
+  timeSteps: 50,
+  isPlaying: false,
+  currentStep: 0,
+  inputData: null,
+  predictions: null,
+  inferenceTime: null,
 }
 
 export const useSimulationStore = create<SimulationState>((set) => ({
   ...initialState,
   
-  setRunning: (running) => set({ isRunning: running }),
-  
-  setModel: (model) => set({ 
-    selectedModel: model,
-    currentData: [],
-    history: [],
-  }),
-  
-  updateParameter: (key, value) => set((state) => ({
-    parameters: { ...state.parameters, [key]: value },
-  })),
-  
-  updateData: (data) => set({ currentData: data }),
-  
-  addHistory: (data) => set((state) => ({
-    history: [...state.history.slice(-100), data], // Keep last 100 frames
-  })),
-  
-  updateMetrics: (inferenceTime, fps) => set({ inferenceTime, fps }),
-  
+  setType: (type) => set({ type }),
+  setResolution: (resolution) => set({ resolution }),
+  setTimeSteps: (timeSteps) => set({ timeSteps }),
+  setIsPlaying: (isPlaying) => set({ isPlaying }),
+  setCurrentStep: (currentStep) => set({ currentStep }),
+  setInputData: (inputData) => set({ inputData }),
+  setPredictions: (predictions) => set({ predictions }),
+  setInferenceTime: (inferenceTime) => set({ inferenceTime }),
   reset: () => set(initialState),
 }))
