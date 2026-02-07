@@ -1,14 +1,17 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { Play, Pause, RotateCcw, Settings } from 'lucide-react'
+import { Play, Pause, RotateCcw, Settings, BarChart3 } from 'lucide-react'
 import { apiClient } from '../lib/api'
 import { useSimulationStore } from '../store/simulationStore'
 import { Visualizer3D } from './Visualizer3D'
 import { ControlPanel } from './ControlPanel'
 import { MetricsPanel } from './MetricsPanel'
+import { ChartPanel } from './ChartPanel'
+import { ExportPanel } from './ExportPanel'
 
 export function Simulator() {
   const [apiError, setApiError] = useState<string | null>(null)
+  const [showChart, setShowChart] = useState(false)
   const { isPlaying, setIsPlaying } = useSimulationStore()
 
   // Health check
@@ -63,15 +66,29 @@ export function Simulator() {
           <h3 className="text-sm font-medium mb-2">Performance</h3>
           <MetricsPanel />
         </div>
+
+        {/* Export */}
+        <div className="card p-4">
+          <ExportPanel />
+        </div>
       </div>
 
-      {/* Center Panel - 3D Visualization */}
+      {/* Center Panel - Visualization */}
       <div className="lg:col-span-6">
         <div className="card h-full flex flex-col">
           {/* Toolbar */}
           <div className="p-4 border-b border-slate-800 flex items-center justify-between">
-            <h2 className="text-lg font-semibold">Visualization</h2>
+            <h2 className="text-lg font-semibold">
+              {showChart ? '2D Chart' : '3D Visualization'}
+            </h2>
             <div className="flex items-center gap-2">
+              <button
+                onClick={() => setShowChart(!showChart)}
+                className="btn-secondary flex items-center gap-2"
+              >
+                <BarChart3 className="w-4 h-4" />
+                {showChart ? '3D' : '2D'}
+              </button>
               <button
                 onClick={() => setIsPlaying(!isPlaying)}
                 className="btn-primary flex items-center gap-2"
@@ -94,9 +111,15 @@ export function Simulator() {
             </div>
           </div>
 
-          {/* 3D Canvas */}
+          {/* Canvas */}
           <div className="flex-1 relative">
-            <Visualizer3D />
+            {showChart ? (
+              <div className="w-full h-full p-4">
+                <ChartPanel />
+              </div>
+            ) : (
+              <Visualizer3D />
+            )}
           </div>
         </div>
       </div>
@@ -114,7 +137,7 @@ export function Simulator() {
               <li>Select PDE type</li>
               <li>Adjust initial conditions</li>
               <li>Watch neural network solve</li>
-              <li>Compare with analytical solution</li>
+              <li>Export results</li>
             </ol>
           </div>
         </div>
@@ -135,6 +158,18 @@ export function Simulator() {
               <div>∂u/∂t + u∂u/∂x = ν∂²u/∂x²</div>
             </div>
           </div>
+        </div>
+
+        <div className="card p-4">
+          <h3 className="text-sm font-medium mb-3">Features</h3>
+          <ul className="text-xs text-slate-400 space-y-1.5">
+            <li>✓ Real-time 3D visualization</li>
+            <li>✓ 2D line plots</li>
+            <li>✓ WebSocket streaming</li>
+            <li>✓ Export JSON/CSV</li>
+            <li>✓ Screenshot capture</li>
+            <li>✓ GPU acceleration</li>
+          </ul>
         </div>
       </div>
     </div>

@@ -5,15 +5,17 @@ Provides RESTful API for:
 - Single and batch inference
 - Health checks and metrics
 - Model metadata
+- WebSocket streaming
 """
 
-from fastapi import FastAPI, HTTPException, status
+from fastapi import FastAPI, HTTPException, status, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from contextlib import asynccontextmanager
 import torch
 from typing import Dict, Any
 import logging
+import json
 
 from physics_informed_ml.api.models import (
     InferenceRequest,
@@ -24,6 +26,7 @@ from physics_informed_ml.api.models import (
     ModelInfo,
 )
 from physics_informed_ml.api.inference import InferenceEngine
+from physics_informed_ml.api.websocket import manager, handle_streaming_inference
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -235,6 +238,53 @@ async def predict_batch(request: BatchInferenceRequest):
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Batch prediction failed: {str(e)}",
         )
+
+
+@app.websocket("/ws")
+async def websocket_endpoint(websocket: WebSocket):
+    """WebSocket endpoint for real-time streaming.
+    
+    Accepts:
+        {
+            "action": "stream",
+            "model_name": "heat_equation_fno",
+            "input_data": [0.5, 0.3, ...],
+            "time_steps": 50
+        }
+    
+    Returns:
+        Stream of predictions with progress updates
+    """
+    await manager.connect(websocket)
+    
+    try:
+        while True:
+            # Receive request
+            data = await websocket.receive_text()
+            message = json.loads(data)
+            
+            if message.get("action") == "stream":
+                if not inference_engine:
+                    await manager.send_personal_message({
+                        "type": "error",
+                        "message": "Inference engine not initialized"
+                    }, websocket)
+                    continue
+                
+                # Start streaming inference
+                await handle_streaming_inference(
+                    websocket=websocket,
+                    model_name=message["model_name"],
+                    input_data=message["input_data"],
+                    time_steps=message["time_steps"],
+                    inference_engine=inference_engine,
+                )
+            
+    except WebSocketDisconnect:
+        manager.disconnect(websocket)
+    except Exception as e:
+        logger.error(f"WebSocket error: {e}")
+        manager.disconnect(websocket)
 
 
 @app.exception_handler(Exception)
