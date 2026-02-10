@@ -128,18 +128,10 @@ def example_single_inference():
     print(f"\nAPI Status: {health['status']}")
     print(f"Device: {health['device']}")
     
-    # Load model (assuming you have a trained model)
+    # Note: Uncomment below lines when you have a trained model
     # client.load_model("/path/to/model.pth", "heat_equation_fno")
-    
-    # Prepare input (example: initial temperature distribution)
-    input_data = [[0.5, 0.4, 0.3, 0.2, 0.1, 0.0]]
-    
-    # Run inference
-    # result = client.predict("heat_equation_fno", input_data)
-    # 
+    # result = client.predict("heat_equation_fno", [[0.5, 0.4, 0.3, 0.2, 0.1, 0.0]])
     # print(f"\nInference time: {result['inference_time_ms']:.2f}ms")
-    # print(f"Input shape: {result['input_shape']}")
-    # print(f"Output shape: {result['output_shape']}")
     # print(f"Prediction: {result['prediction'][:5]}...")  # First 5 values
 
 
@@ -158,15 +150,15 @@ def example_batch_inference():
         for i in range(n_samples)
     ]
     
-    # Batch inference
-    start_time = time.time()
+    print(f"\nPrepared {n_samples} samples for batch inference")
+    print("Note: Uncomment API calls when model is loaded")
+    
+    # Note: Uncomment below lines when you have a trained model
+    # start_time = time.time()
     # results = client.predict_batch("heat_equation_fno", input_data_list)
     # elapsed = time.time() - start_time
-    # 
     # print(f"\nProcessed {n_samples} samples in {elapsed:.3f}s")
     # print(f"Throughput: {n_samples/elapsed:.1f} samples/sec")
-    # 
-    # # Average inference time
     # avg_time = np.mean([r['inference_time_ms'] for r in results])
     # print(f"Average inference time: {avg_time:.2f}ms")
 
@@ -183,7 +175,7 @@ def example_error_handling():
     try:
         client.predict("nonexistent_model", [[0.5]])
     except requests.HTTPError as e:
-        print(f"\nExpected error: {e}")
+        print(f"\nExpected error caught: {e}")
         print(f"Status code: {e.response.status_code}")
         print(f"Detail: {e.response.json()['detail']}")
     
@@ -203,23 +195,23 @@ def example_model_comparison():
     
     client = PhysicsMLClient()
     
-    # Load different models
-    models = {
-        "fno": "/path/to/fno_model.pth",
-        "pinn": "/path/to/pinn_model.pth",
-    }
+    print("\nNote: This example shows structure for model comparison")
+    print("Uncomment API calls when models are loaded")
     
+    # Note: Uncomment below lines when you have trained models
+    # models = {
+    #     "fno": "/path/to/fno_model.pth",
+    #     "pinn": "/path/to/pinn_model.pth",
+    # }
+    # 
     # for name, path in models.items():
     #     client.load_model(path, name)
     #     info = client.get_model_info(name)
     #     print(f"\n{name.upper()}:")
     #     print(f"  Type: {info['type']}")
     #     print(f"  Parameters: {info['parameters']:,}")
-    
-    # Test input
-    input_data = [[0.5] * 64]
-    
-    # # Compare performance
+    # 
+    # input_data = [[0.5] * 64]
     # for name in models.keys():
     #     result = client.predict(name, input_data)
     #     print(f"\n{name.upper()} Inference: {result['inference_time_ms']:.2f}ms")
