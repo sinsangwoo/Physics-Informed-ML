@@ -1,0 +1,36 @@
+# Cloudflare Workers configuration
+# Deploy with: wrangler deploy
+
+name = "physics-ml-edge"
+main = "workers.js"
+compatibility_date = "2024-01-01"
+
+[env.production]
+route = "https://physics-ml.com/*"
+
+[env.staging]
+route = "https://staging.physics-ml.com/*"
+
+# Environment variables
+[vars]
+API_ENDPOINT = "api.physics-ml.com"
+
+# KV namespaces for caching
+[[kv_namespaces]]
+binding = "CACHE"
+id = "your-kv-namespace-id"
+
+# R2 bucket for static assets
+[[r2_buckets]]
+binding = "STATIC_ASSETS"
+bucket_name = "physics-ml-assets"
+
+# Durable Objects for WebSocket state
+[[durable_objects.bindings]]
+name = "WEBSOCKET_STATE"
+class_name = "WebSocketState"
+script_name = "physics-ml-edge"
+
+# Rate limiting
+[limits]
+cpu_ms = 50

@@ -1,0 +1,39 @@
+# Prometheus configuration for monitoring
+# Collects metrics from API endpoints
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    cluster: 'physics-ml-prod'
+    environment: 'production'
+
+rule_files:
+  - 'alerts.yaml'
+
+alerting:
+  alertmanagers:
+  - static_configs:
+    - targets:
+      - 'alertmanager:9093'
+
+scrape_configs:
+  # API metrics
+  - job_name: 'physics-ml-api'
+    static_configs:
+    - targets:
+      - 'physics-ml-api:8000'
+    metrics_path: '/metrics'
+    scrape_interval: 10s
+  
+  # Node exporter
+  - job_name: 'node'
+    static_configs:
+    - targets:
+      - 'node-exporter:9100'
+  
+  # GPU metrics (if available)
+  - job_name: 'dcgm-exporter'
+    static_configs:
+    - targets:
+      - 'dcgm-exporter:9400'
