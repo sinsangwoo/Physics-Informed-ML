@@ -9,6 +9,7 @@ Provides:
 """
 
 from physics_informed_ml.uncertainty.bayesian import (
+    BayesianLinear,
     BayesianFNO,
     BayesianPINN,
     VariationalInference,
@@ -25,6 +26,7 @@ from physics_informed_ml.uncertainty.calibration import (
 )
 
 __all__ = [
+    "BayesianLinear",
     "BayesianFNO",
     "BayesianPINN",
     "VariationalInference",
